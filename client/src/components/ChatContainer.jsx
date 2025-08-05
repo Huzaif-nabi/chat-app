@@ -28,7 +28,7 @@ const ChatContainer = ({selectedUser,setSelectedUser }) => {
 
       <div className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'>
         {messagesDummyData.map((msg, index) => (
-          <div key={index} className={`flex items-end gap-2 justify-end ${msg.senderId !== '680f571ff10f3cd28382f094' && 'flex-row-reversed'}`}>
+          <div key={index} className={`flex items-end gap-2 justify-end ${msg.senderId !== '680f5745f10f3cd28382f0c5' && 'flex-row-reversed'}`}>
             {msg.image ? (
               <img src={msg.image} alt="" className='max-w-[230px] border border-gray-700 rounded-lg overflow-idden mb-8'/>
             ):(
