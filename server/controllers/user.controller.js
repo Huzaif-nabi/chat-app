@@ -121,14 +121,14 @@ export const updateProfile = async (req,res) => {
     try {
         const {profilePic, bio, fullName} = req.body;
 
-        const userId = req.user._id;
+        const userId = req.user._id; // The user's ID is taken from req.user, which is populated by the authentication middleware
         let updatedUser;
 
         if(!profilePic){
             updatedUser = await User.findByIdAndUpdate(userId, {bio, fullName}, {new: true});
         }
         else{
-            const upload = await cloudinary.uploader.upload(profilePic);
+            const upload = await cloudinary.uploader.upload(profilePic); // It gets uploaded to Cloudinary (a cloud image hosting service).returned secure_url is saved as the new profile picture in the database.
 
             updatedUser = await User.findByIdAndUpdate(userId, {profilePic: upload.secure_url, bio, fullName}, {new: true});
         }

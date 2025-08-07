@@ -4,6 +4,7 @@ import cors from "cors";
 import http from "http";
 import { connectDB } from './lib/db.js';
 import userRouter from './routes/user.routes.js';
+import messageRouter from './routes/message.routes.js';
 
 
 // Create Express app and HTTP server
@@ -14,10 +15,10 @@ const server = http.createServer(app);
 app.use(express.json({limit: "4mb"}))  // Can upload images of max 4mb limit
 app.use(cors());
 
-
 // Route setup
 app.use("/api/status", (req,res)=> res.send("Server is live"));
 app.use("/api/auth", userRouter);
+app.use("/api/messages", messageRouter)
 
 // Connect to MongoDB
 await connectDB();
