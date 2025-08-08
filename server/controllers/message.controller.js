@@ -3,6 +3,7 @@
 import Message from "../models/message.js";
 import User from "../models/user.model.js"
 import cloudinary from '../lib/cloudinary.js'
+import {io, userSocketmap} from '../server.js'
 
 export const getUsersForSidebar = async (req,res) => { // Fetch all users except the currently logged-in user. Also return the count of unseen (not yet read) messages from each user.
     try {
@@ -64,9 +65,9 @@ export const getMessages = async (req,res) => {  // retrieves all chat messages 
 
 //  API to mark message as seen using message id
 
-export const markMessageAsSeen = async (req,res) => {
+export const markMessageAsSeen = async (req,res) => { // It marks a specific message as seen by updating the seen field to true in the database.
     try {
-        const {id} = req.param;
+        const {id} = req.params; // The id is fetched from the URL.
         await Message.findByIdAndUpdate(id, {seen: true})
         res.json({success: true})
     } catch (error) {
@@ -82,7 +83,7 @@ export const markMessageAsSeen = async (req,res) => {
 export const sendMessage = async (req, res) => {
     try {
         const {text, image} = req.body;
-        const recieverId = req.param.id;
+        const recieverId = req.params.id;
         const senderId = req.user._id;
 
         let imageUrl;
@@ -92,7 +93,23 @@ export const sendMessage = async (req, res) => {
             imageUrl = uploadResponse.secure_url;
         }
 
-            const newMessage = await Message.create()
+            const newMessage = await Message.create({
+                senderId,
+                recieverId,
+                text,
+                image: imageUrl
+            })
+
+            // Emit the new msg to the recievers socket
+            const receiverSocketId = userSocketMap[receivedId];  // Looks up the socket ID of the user who’s supposed to receive the message.
+            if(receiverSocketId){
+                io.to(receiverSocketId).emit("newMessage", newMessage); // sends an event named "newMessage" with the newMessage payload 
+            }
+
+            res.json({
+                success: true,
+                newMessage
+            })
 
     } catch (error) {
         
