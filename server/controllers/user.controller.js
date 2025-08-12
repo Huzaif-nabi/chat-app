@@ -115,7 +115,6 @@ export const checkAuth = (req,res) =>{
         user: req.user
     });
 }
-
 // Controller to update user profile details
 export const updateProfile = async (req,res) => {
     try {

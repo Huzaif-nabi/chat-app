@@ -28,11 +28,16 @@ export const AuthProvider = ({ children }) => {
   };
 
 const login = async (type, credentials) => {
-  console.log("AuthContext: login called with state:", type);
-  console.log("AuthContext: credentials:", credentials);
-
   try {
-    const res = await fetch(`http://localhost:5000/api/auth/signup`, {
+    console.log("AuthContext: login called with state:", type);
+    console.log("AuthContext: credentials:", credentials);
+
+    const endpoint =
+      type === "signUp"
+        ? "http://localhost:5000/api/auth/signUp"
+        : "http://localhost:5000/api/auth/login";
+
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(credentials),
@@ -42,17 +47,12 @@ const login = async (type, credentials) => {
     console.log("AuthContext: API response:", data);
 
     if (data.success) {
-      // Store user info in state
-      setAuthUser(data.data.newUser);
-
-      // Persist user & token in localStorage
-      localStorage.setItem("authUser", JSON.stringify(data.data.newUser));
+      setAuthUser(data.data.user || data.data.newUser);
+      localStorage.setItem("authUser", JSON.stringify(data.data.user || data.data.newUser));
       localStorage.setItem("token", data.data.token);
 
-      console.log("AuthContext: Login successful, user set:", data.data.newUser);
-
-      // Return success for redirection in LoginPage.jsx
-      return { success: true, user: data.data.newUser };
+      console.log("AuthContext: Login successful, user set:", data.data.user || data.data.newUser);
+      return { success: true, user: data.data.user || data.data.newUser };
     } else {
       console.error("AuthContext: Login failed:", data.message);
       return { success: false, message: data.message };
@@ -62,6 +62,7 @@ const login = async (type, credentials) => {
     return { success: false, message: "Something went wrong" };
   }
 };
+
 
   // Logout function to handle user logout and socket disconnection
   const logout = async () => {
@@ -124,4 +125,4 @@ const login = async (type, credentials) => {
   return (
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
-};
+}
