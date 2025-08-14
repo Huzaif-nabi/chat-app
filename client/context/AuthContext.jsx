@@ -78,16 +78,23 @@ const login = async (type, credentials) => {
 
   // Update profile function to handle user profile updates
   const updateProfile = async (body) => {
-    try {
-      const { data } = await axios.put("/api/auth/update-profile", body);
-      if (data.success) {
-        setAuthUser(data.user);
-        toast.success("Profile updated successfully");
-      }
-    } catch (error) {
-      toast.error(error.message);
+  try {
+    const token = localStorage.getItem("token");
+    const { data } = await axios.put("/api/auth/update-profile", body, {
+      headers: { token },
+    });
+
+    if (data.success) {
+      setAuthUser(data.user);
+      toast.success("Profile updated successfully");
+    } else {
+      toast.error(data.message);
     }
-  };
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
+
 
   // Connect socket function to handle socket connection and online users updates
   const connectSocket = (userData) => {

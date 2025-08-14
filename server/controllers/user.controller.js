@@ -1,7 +1,8 @@
 import { generateToken } from '../lib/utils.js';
 import User from '../models/user.model.js';
 import bcrypt from 'bcryptjs'
-import cloudinary from '../lib/cloudinary.js'
+import cloudinary from "../lib/cloudinary.js";
+
 
 // Sign-Up
 
@@ -116,32 +117,35 @@ export const checkAuth = (req,res) =>{
     });
 }
 // Controller to update user profile details
-export const updateProfile = async (req,res) => {
-    try {
-        const {profilePic, bio, fullName} = req.body;
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePic, bio, fullName } = req.body;
+    const userId = req.user.id;
+    let updatedUser;
 
-        const userId = req.user._id; // The user's ID is taken from req.user, which is populated by the authentication middleware
-        let updatedUser;
-
-        if(!profilePic){
-            updatedUser = await User.findByIdAndUpdate(userId, {bio, fullName}, {new: true});
-        }
-        else{
-            const upload = await cloudinary.uploader.upload(profilePic); // It gets uploaded to Cloudinary (a cloud image hosting service).returned secure_url is saved as the new profile picture in the database.
-
-            updatedUser = await User.findByIdAndUpdate(userId, {profilePic: upload.secure_url, bio, fullName}, {new: true});
-        }
-
-        res.json({
-            success: true,
-            user: updatedUser
-        })
-
-    } catch (error) {
-        console.log(error.message);
-        res.json({
-            success: false,
-            message: error.message
-        })
+    if (profilePic) {
+      if (!profilePic.startsWith("data:image")) {
+        throw new Error("Invalid image format");
+      }
+      const upload = await cloudinary.uploader.upload(profilePic, {
+        folder: "profile_pics",
+      });
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { profilePic: upload.secure_url, bio, fullName },
+        { new: true }
+      );
+    } else {
+      updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { bio, fullName },
+        { new: true }
+      );
     }
-}
+
+    res.json({ success: true, user: updatedUser });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

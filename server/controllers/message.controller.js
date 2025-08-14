@@ -1,4 +1,4 @@
-// Get all users except the logged in user
+
 
 import Message from "../models/message.js";
 import User from "../models/user.model.js"
@@ -86,26 +86,37 @@ export const sendMessage = async (req, res) => {
         const recieverId = req.params.id;
         const senderId = req.user._id;
 
-        let imageUrl;
+        let imageUrl = "";
+
         if (image) {
-            const uploadResponse = await cloudinary.uploader.upload(image);
-            imageUrl = uploadResponse.secure_url;
+            if (image.startsWith("http")) {
+                // Already uploaded image URL from frontend
+                imageUrl = image;
+            } else {
+                // Upload raw base64 or file to Cloudinary
+                const uploadResponse = await cloudinary.uploader.upload(image);
+                imageUrl = uploadResponse.secure_url;
+            }
+        }
+
+        if (!text && !imageUrl) {
+            return res.status(400).json({ success: false, message: "Message must have text or image" });
         }
 
         const newMessage = await Message.create({
             senderId,
             recieverId,
-            text,
-            image: imageUrl
+            text: text || "",
+            image: imageUrl || "",
         });
 
-        // Emit the new msg to the sender
+        // Emit to sender
         const senderSocketId = userSocketmap[senderId];
         if (senderSocketId) {
             io.to(senderSocketId).emit("newMessage", newMessage);
         }
 
-        // Emit the new msg to the receiver
+        // Emit to receiver
         const receiverSocketId = userSocketmap[recieverId];
         if (receiverSocketId) {
             io.to(receiverSocketId).emit("newMessage", newMessage);

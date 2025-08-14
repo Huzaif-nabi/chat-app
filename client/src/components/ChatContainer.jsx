@@ -22,20 +22,44 @@ const ChatContainer = () => {
   };
 
   // Send image message
-  const handleSendImage = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !file.type.startsWith("image/")) {
-      toast.error("Select an image file");
+ // Send image message
+const handleSendImage = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith("image/")) {
+    toast.error("Select an image file");
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: "POST", body: formData }
+    );
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Cloudinary error:", errorData);
+      toast.error(errorData.error?.message || "Image upload failed");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      await sendMessage({ image: reader.result });
-      e.target.value = "";
-    };
-    reader.readAsDataURL(file);
-  };
+    const data = await res.json();
+    if (data.secure_url) {
+      await sendMessage({ image: data.secure_url });
+    }
+
+    e.target.value = ""; // Reset file input
+  } catch (error) {
+    toast.error("Error uploading image");
+    console.error(error);
+  }
+};
+
+
 
   // Load messages when user is selected
   useEffect(() => {
