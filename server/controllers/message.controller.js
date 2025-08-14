@@ -82,36 +82,45 @@ export const markMessageAsSeen = async (req,res) => { // It marks a specific mes
 // Send message to selected user
 export const sendMessage = async (req, res) => {
     try {
-        const {text, image} = req.body;
+        const { text, image } = req.body;
         const recieverId = req.params.id;
         const senderId = req.user._id;
 
         let imageUrl;
-
-        if(image){
-            const uploadResponse = cloudinary.uploader.upload(image);
+        if (image) {
+            const uploadResponse = await cloudinary.uploader.upload(image);
             imageUrl = uploadResponse.secure_url;
         }
 
-            const newMessage = await Message.create({
-                senderId,
-                recieverId,
-                text,
-                image: imageUrl
-            })
+        const newMessage = await Message.create({
+            senderId,
+            recieverId,
+            text,
+            image: imageUrl
+        });
 
-            // Emit the new msg to the recievers socket
-            const receiverSocketId = userSocketMap[receivedId];  // Looks up the socket ID of the user who’s supposed to receive the message.
-            if(receiverSocketId){
-                io.to(receiverSocketId).emit("newMessage", newMessage); // sends an event named "newMessage" with the newMessage payload 
-            }
+        // Emit the new msg to the sender
+        const senderSocketId = userSocketmap[senderId];
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("newMessage", newMessage);
+        }
 
-            res.json({
-                success: true,
-                newMessage
-            })
+        // Emit the new msg to the receiver
+        const receiverSocketId = userSocketmap[recieverId];
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("newMessage", newMessage);
+        }
+
+        res.json({
+            success: true,
+            newMessage
+        });
 
     } catch (error) {
-        
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-}
+};
