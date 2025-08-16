@@ -33,9 +33,9 @@ const login = async (type, credentials) => {
     console.log("AuthContext: credentials:", credentials);
 
     const endpoint =
-      type === "signUp"
-        ? "http://localhost:5000/api/auth/signUp"
-        : "http://localhost:5000/api/auth/login";
+        type === "signUp"
+          ? `${backendUrl}/api/auth/signUp`
+          : `${backendUrl}/api/auth/login`;
 
     const res = await fetch(endpoint, {
       method: "POST",
